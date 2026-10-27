@@ -1,0 +1,4 @@
+/puppetron
+/puppetron-linux-*
+/novnc/
+*.log

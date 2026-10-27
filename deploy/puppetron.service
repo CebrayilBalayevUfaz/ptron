@@ -1,0 +1,24 @@
+[Unit]
+Description=Puppetron – libvirt/KVM web UI
+After=network-online.target libvirtd.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=puppetron
+Group=libvirt
+WorkingDirectory=/opt/puppetron
+EnvironmentFile=-/etc/puppetron.env
+ExecStart=/opt/puppetron/puppetron
+Restart=on-failure
+RestartSec=3
+
+# Hardening (relax if virt-install needs to write somewhere else)
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+ReadWritePaths=/var/lib/libvirt/images /var/run/puppetron-tokens
+
+[Install]
+WantedBy=multi-user.target

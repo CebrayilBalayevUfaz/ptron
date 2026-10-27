@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Puppetron</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand-row">
+    <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path fill="currentColor" d="M4 4h16a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-6v2h3v2H7v-2h3v-2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zm0 2v9h16V6H4z"/></svg>
+    <span class="brand-name">Puppetron</span>
+    <span id="host-name" class="muted host-name"></span>
+  </div>
+  <div class="host-stats" id="host-stats" title="Host resources">
+    <div class="meter" id="host-cpu"><span class="meter-label">CPU</span><div class="bar"><div class="fill"></div></div><span class="meter-value">–</span></div>
+    <div class="meter" id="host-mem"><span class="meter-label">RAM</span><div class="bar"><div class="fill"></div></div><span class="meter-value">–</span></div>
+  </div>
+  <div class="topbar-actions">
+    <span id="conn-status" class="dot ok" title="Connection"></span>
+    <span id="user-name" class="muted"></span>
+    <button class="btn ghost" id="logout-btn">Sign out</button>
+  </div>
+</header>
+
+<main class="layout">
+  <section class="list-pane">
+    <div class="toolbar">
+      <input id="filter" type="search" placeholder="Filter VMs…" aria-label="Filter VMs">
+      <select id="state-filter" aria-label="State filter">
+        <option value="">All states</option>
+        <option value="running">Running</option>
+        <option value="shutoff">Shut off</option>
+        <option value="paused">Paused</option>
+        <option value="other">Other</option>
+      </select>
+      <div class="spacer"></div>
+      <button class="btn" id="refresh-btn" title="Refresh">↻</button>
+      <button class="btn primary" id="new-vm-btn" hidden>+ New VM</button>
+    </div>
+    <div class="summary" id="summary"></div>
+    <div id="vm-list" class="vm-list" aria-live="polite"></div>
+    <p id="list-empty" class="muted center" hidden>No virtual machines found.</p>
+    <p id="list-error" class="error center" hidden></p>
+  </section>
+
+  <aside class="detail-pane" id="detail-pane" hidden>
+    <div class="detail-header">
+      <div>
+        <h2 id="d-name"></h2>
+        <div class="detail-sub"><span id="d-state" class="badge"></span> <span id="d-uuid" class="muted mono"></span></div>
+      </div>
+      <button class="btn ghost close" id="detail-close" aria-label="Close">✕</button>
+    </div>
+    <div class="actions" id="d-actions"></div>
+    <nav class="tabs" id="tabs">
+      <button data-tab="overview" class="active">Overview</button>
+      <button data-tab="snapshots">Snapshots</button>
+      <button data-tab="xml">XML</button>
+      <button data-tab="danger">Settings</button>
+    </nav>
+
+    <section class="tab" data-tab="overview">
+      <div class="stats-grid">
+        <div class="stat"><div class="stat-label">CPU</div><div class="stat-value" id="s-cpu">–</div><div class="bar"><div class="fill" id="s-cpu-bar"></div></div></div>
+        <div class="stat"><div class="stat-label">Memory</div><div class="stat-value" id="s-mem">–</div><div class="bar"><div class="fill" id="s-mem-bar"></div></div></div>
+        <div class="stat"><div class="stat-label">Disk I/O</div><div class="stat-value" id="s-disk">–</div></div>
+        <div class="stat"><div class="stat-label">Network</div><div class="stat-value" id="s-net">–</div></div>
+      </div>
+      <dl class="kv" id="d-info"></dl>
+      <h3>IP addresses</h3>
+      <table class="tbl" id="d-ips"></table>
+      <h3>Disks</h3>
+      <table class="tbl" id="d-disks"></table>
+      <h3>Network interfaces</h3>
+      <table class="tbl" id="d-nics"></table>
+      <h3>Graphics</h3>
+      <table class="tbl" id="d-graphics"></table>
+    </section>
+
+    <section class="tab" data-tab="snapshots" hidden>
+      <form id="snap-form" class="inline-form">
+        <input id="snap-name" placeholder="Snapshot name (optional)" pattern="[A-Za-z0-9_][A-Za-z0-9._ +\-]*">
+        <input id="snap-desc" placeholder="Description (optional)">
+        <button class="btn primary" type="submit">Create snapshot</button>
+      </form>
+      <table class="tbl" id="snap-table"></table>
+      <p class="muted" id="snap-empty" hidden>No snapshots.</p>
+    </section>
+
+    <section class="tab" data-tab="xml" hidden>
+      <div class="inline-form">
+        <label class="check"><input type="checkbox" id="xml-inactive" checked> Show persistent (inactive) config</label>
+        <div class="spacer"></div>
+        <button class="btn" id="xml-reload">Reload</button>
+        <button class="btn primary" id="xml-save" hidden>Define (save)</button>
+      </div>
+      <textarea id="xml-text" class="mono xml" spellcheck="false"></textarea>
+    </section>
+
+    <section class="tab" data-tab="danger" hidden>
+      <h3>Autostart</h3>
+      <p class="muted">Start this VM automatically when the host boots.</p>
+      <button class="btn" id="autostart-btn"></button>
+      <h3>Managed save</h3>
+      <p class="muted">Save the VM's memory state to disk and stop it; it resumes on next start.</p>
+      <button class="btn" data-action="managedsave">Managed save</button>
+      <h3 class="danger-title">Delete VM</h3>
+      <p class="muted">Undefines the domain. Optionally also deletes all its storage volumes. This cannot be undone.</p>
+      <label class="check"><input type="checkbox" id="undefine-storage"> Also delete disk images</label>
+      <button class="btn danger" id="undefine-btn">Delete VM</button>
+    </section>
+  </aside>
+</main>
+
+<!-- New VM dialog -->
+<dialog id="new-vm-dialog">
+  <form id="new-vm-form" method="dialog">
+    <h2>Create virtual machine</h2>
+    <div class="form-grid">
+      <label>Name <input name="name" required pattern="[A-Za-z0-9_][A-Za-z0-9._+\-]*" placeholder="my-vm"></label>
+      <label>OS variant <input name="os_variant" list="os-variants" value="generic" placeholder="e.g. ubuntu24.04, win11, generic"></label>
+      <datalist id="os-variants">
+        <option value="generic"><option value="linux2022"><option value="ubuntu24.04"><option value="ubuntu22.04"><option value="debian12"><option value="fedora40"><option value="rhel9.4"><option value="centos-stream9"><option value="almalinux9"><option value="rocky9"><option value="archlinux"><option value="alpinelinux3.19"><option value="win10"><option value="win11"><option value="win2k22"><option value="freebsd14.0">
+      </datalist>
+      <label>Memory (MiB) <input name="memory_mib" type="number" min="64" step="64" value="2048" required></label>
+      <label>vCPUs <input name="vcpus" type="number" min="1" value="2" required></label>
+      <label>Disk size (GiB) <input name="disk_gib" type="number" min="0" value="20"></label>
+      <label>Storage pool <select name="pool" id="nv-pool"></select></label>
+      <label class="span2">Existing disk image (instead of new disk) <input name="disk_path" placeholder="/var/lib/libvirt/images/existing.qcow2"></label>
+      <label class="span2">Install ISO <input name="iso" list="iso-list" placeholder="/var/lib/libvirt/images/installer.iso (leave empty to import existing disk / PXE)"></label>
+      <datalist id="iso-list"></datalist>
+      <label>Network <select name="network" id="nv-network"></select></label>
+      <label>Bridge (overrides network) <input name="bridge" placeholder="br0"></label>
+      <label class="check"><input type="checkbox" name="uefi"> UEFI firmware</label>
+      <label class="check"><input type="checkbox" name="autostart"> Autostart on host boot</label>
+    </div>
+    <p class="error" id="new-vm-error" hidden></p>
+    <pre class="mono small" id="new-vm-cmd" hidden></pre>
+    <div class="dialog-actions">
+      <button type="button" class="btn" id="new-vm-cancel">Cancel</button>
+      <button type="submit" class="btn primary" id="new-vm-submit">Create</button>
+    </div>
+  </form>
+</dialog>
+
+<div id="toasts" class="toasts" aria-live="polite"></div>
+<script src="/static/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Console – Puppetron</title>
+<link rel="stylesheet" href="/static/style.css">
+<link rel="stylesheet" href="/static/console.css">
+</head>
+<body class="console-body">
+<header class="console-bar" id="console-bar">
+  <div class="left">
+    <a href="/" class="btn ghost" title="Back to dashboard">←</a>
+    <strong id="c-title">Console</strong>
+    <span id="c-status" class="badge">connecting…</span>
+  </div>
+  <div class="right">
+    <button class="btn" id="c-cad" title="Send Ctrl+Alt+Del">Ctrl+Alt+Del</button>
+    <button class="btn" id="c-keys" title="Extra keys">Keys ▾</button>
+    <button class="btn" id="c-clip" title="Clipboard">Clipboard</button>
+    <button class="btn" id="c-scale" title="Toggle scaling">Scale: on</button>
+    <button class="btn" id="c-fullscreen" title="Fullscreen">⛶</button>
+    <button class="btn" id="c-reconnect" title="Reconnect">↻</button>
+    <div class="dropdown">
+      <button class="btn" id="c-power">Power ▾</button>
+      <div class="menu" id="c-power-menu" hidden>
+        <button data-action="start">Start</button>
+        <button data-action="shutdown">Shutdown (ACPI)</button>
+        <button data-action="reboot">Reboot (ACPI)</button>
+        <button data-action="reset">Reset (hard)</button>
+        <button data-action="destroy" class="danger-item">Force off</button>
+        <button data-action="suspend">Pause</button>
+        <button data-action="resume">Resume</button>
+      </div>
+    </div>
+    <a id="c-full-novnc" class="btn ghost" target="_blank" rel="noopener" title="Open in the full noVNC client">noVNC ↗</a>
+  </div>
+</header>
+<div class="keys-panel" id="keys-panel" hidden>
+  <button data-key="XK_Escape" data-code="Escape">Esc</button>
+  <button data-key="XK_Tab" data-code="Tab">Tab</button>
+  <button data-toggle="XK_Control_L" data-code="ControlLeft">Ctrl</button>
+  <button data-toggle="XK_Alt_L" data-code="AltLeft">Alt</button>
+  <button data-toggle="XK_Super_L" data-code="MetaLeft">Win</button>
+  <button data-key="XK_F1" data-code="F1">F1</button>
+  <button data-key="XK_F2" data-code="F2">F2</button>
+  <button data-key="XK_F5" data-code="F5">F5</button>
+  <button data-key="XK_F10" data-code="F10">F10</button>
+  <button data-key="XK_F11" data-code="F11">F11</button>
+  <button data-key="XK_F12" data-code="F12">F12</button>
+  <button data-key="XK_Print" data-code="PrintScreen">PrtSc</button>
+</div>
+<div class="clip-panel" id="clip-panel" hidden>
+  <textarea id="clip-text" placeholder="Text to send to the VM clipboard (then paste inside the guest)"></textarea>
+  <div class="row">
+    <button class="btn primary" id="clip-send">Send to VM</button>
+    <button class="btn" id="clip-type" title="Type the text as keystrokes (works even without guest clipboard support)">Type into VM</button>
+    <button class="btn" id="clip-close">Close</button>
+  </div>
+</div>
+<div id="screen" class="screen"></div>
+<div id="overlay" class="overlay" hidden>
+  <div class="overlay-box">
+    <h2 id="o-title">Connecting…</h2>
+    <p id="o-msg" class="muted"></p>
+    <div class="row">
+      <button class="btn primary" id="o-retry">Reconnect</button>
+      <button class="btn" id="o-start" hidden>Start VM</button>
+    </div>
+  </div>
+</div>
+<div id="toasts" class="toasts"></div>
+<script type="module" src="/static/console.js"></script>
+</body>
+</html>
